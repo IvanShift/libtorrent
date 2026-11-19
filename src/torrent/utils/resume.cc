@@ -2,6 +2,8 @@
 
 #include "resume.h"
 
+#include <algorithm>
+
 #include "data/file.h"
 #include "data/file_list.h"
 #include "data/transfer_list.h"
@@ -33,6 +35,14 @@
                     file_index, __VA_ARGS__);
 
 namespace torrent {
+
+static Object
+resume_bitfield_object(const Bitfield* bitfield) {
+  if (bitfield->is_all_set() || bitfield->is_all_unset())
+    return static_cast<int64_t>(bitfield->size_set());
+
+  return std::string(bitfield->begin(), bitfield->end());
+}
 
 void
 resume_load_progress(Download download, const Object& object) {
@@ -239,6 +249,23 @@ resume_save_progress(Download download, Object& object) {
   }
 }
 
+bool
+resume_progress_unchanged(Download download, const Object& object) {
+  if (!object.has_key("bitfield") || !object_equal(object.get_key("bitfield"), resume_bitfield_object(download.file_list()->bitfield())))
+    return false;
+
+  if (!object.has_key_list("files"))
+    return false;
+
+  const auto& files = object.get_key_list("files");
+
+  return std::equal(download.file_list()->begin(), download.file_list()->end(), files.begin(), files.end(), [](const auto& file, const auto& entry) {
+    return file->size_bytes() != 0 && !file->is_resize_queued() && entry.is_map() &&
+           entry.has_key_value("mtime") && entry.get_key_value("mtime") >= 0 &&
+           entry.has_key_value("completed") && entry.get_key_value("completed") == static_cast<int64_t>(file->completed_chunks());
+  });
+}
+
 void
 resume_clear_progress([[maybe_unused]] Download download, Object& object) {
   object.erase_key("bitfield");
@@ -282,15 +309,15 @@ resume_load_bitfield(Download download, const Object& object) {
 
 void
 resume_save_bitfield(Download download, Object& object) {
-  const Bitfield* bitfield = download.file_list()->bitfield();
+  auto bitfield = resume_bitfield_object(download.file_list()->bitfield());
 
-  if (bitfield->is_all_set() || bitfield->is_all_unset()) {
+  if (bitfield.is_value()) {
     LT_LOG_SAVE("uniform bitfield, saving size only", 0);
-    object.insert_key("bitfield", bitfield->size_set());
   } else {
     LT_LOG_SAVE("saving bitfield", 0);
-    object.insert_key("bitfield", std::string(bitfield->begin(), bitfield->end()));
   }
+
+  object.insert_key("bitfield", bitfield);
 }
 
 void

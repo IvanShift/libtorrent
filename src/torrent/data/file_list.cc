@@ -408,15 +408,6 @@ FileList::open(bool hashing, int flags) {
     for (auto& entry : *this) {
       current_file = entry.get();
 
-      // We no longer consider it an error to open a previously opened
-      // FileList as we now use the same function to create
-      // non-existent files.
-      //
-      // Since m_is_open is set, we know root dir wasn't changed, thus
-      // we can keep the previously opened file.
-      if (entry->is_open())
-        continue;
-
       if (entry->is_padding())
         continue;
 
@@ -565,6 +556,11 @@ FileList::open_file(File* file_node, const Path& lastPath, bool hashing, int fla
     }
 
     make_directory(path->begin(), path->end(), firstMismatch);
+  }
+
+  if (file_node->is_open()) {
+    file_node->unset_flags_protected(File::flag_create_queued);
+    return true;
   }
 
   // Some torrents indicate an empty directory by having a path with

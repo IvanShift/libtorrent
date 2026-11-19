@@ -55,6 +55,7 @@ namespace torrent {
 
 void resume_load_progress(Download download, const Object& object) LIBTORRENT_EXPORT;
 void resume_save_progress(Download download, Object& object) LIBTORRENT_EXPORT;
+bool resume_progress_unchanged(Download download, const Object& object) LIBTORRENT_EXPORT;
 void resume_clear_progress(Download download, Object& object) LIBTORRENT_EXPORT;
 
 bool resume_load_bitfield(Download download, const Object& object) LIBTORRENT_EXPORT;

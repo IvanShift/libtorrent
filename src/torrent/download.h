@@ -31,6 +31,7 @@ public:
   static constexpr int start_no_create       = (1 << 1);
   static constexpr int start_keep_baseline   = (1 << 2);
   static constexpr int start_skip_tracker    = (1 << 3);
+  static constexpr int start_keep_files      = (1 << 4);
 
   static constexpr int stop_skip_tracker     = (1 << 0);
 

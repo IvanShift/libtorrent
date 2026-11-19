@@ -20,6 +20,7 @@
 #include "torrent/exceptions.h"
 #include "torrent/throttle.h"
 #include "torrent/data/file_list.h"
+#include "torrent/data/file_manager.h"
 #include "torrent/download/choke_queue.h"
 #include "torrent/download/download_manager.h"
 #include "torrent/download_info.h"
@@ -154,7 +155,9 @@ void DownloadMain::start(int flags) {
   //
   // We should not need to clear chunks after hash checking the whole torrent as those chunk handle
   // references go to zero.
-  file_list()->close_all_files();
+  if (!(flags & Download::start_keep_files) ||
+      manager->file_manager()->advise_random() != manager->file_manager()->advise_random_hashing())
+    file_list()->close_all_files();
 
   // If the FileList::open_no_create flag was not set, our new
   // behavior is to create all zero-length files with

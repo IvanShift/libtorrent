@@ -8,6 +8,7 @@
 #include "manager.h"
 #include "data/socket_file.h"
 #include "torrent/data/file_manager.h"
+#include "torrent/utils/chrono.h"
 #include "torrent/utils/file_stat.h"
 
 namespace torrent {
@@ -67,7 +68,7 @@ File::prepare(bool hashing, int prot, int flags) {
   if (is_padding())
     return true;
 
-  m_last_touched = this_thread::cached_time().count();
+  m_last_touched = utils::time_since_epoch().count();
 
   // Check if we got write protection and flag_resize_queued is
   // set. If so don't quit as we need to try re-sizing, instead call
